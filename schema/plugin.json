@@ -1,0 +1,34 @@
+{
+  "jupyter.lab.shortcuts": [],
+  "jupyter.lab.setting-icon": "jupyterlab-rosjoy:icon",
+  "jupyter.lab.setting-icon-label": "Controller Settings",
+  "title": "jupyterlab-rosjoy",
+  "description": "jupyterlab-rosjoy settings",
+  "type": "object",
+  "properties": 
+  {
+    "gamepads": 
+    {
+     "type": "array",
+      "items": 
+      {
+        "$ref": "#/$defs/gamepad"
+      },
+      "title": "Configured rooms",
+      "description": "Configure Jitsi rooms.",
+      "default": 
+      [{
+          "alias" : "SNES"
+      }]
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "gamepad" : {
+      "type":"object",
+      "properties":{
+        "alias" : {"type":"string"}
+      }
+    }
+  }
+}
