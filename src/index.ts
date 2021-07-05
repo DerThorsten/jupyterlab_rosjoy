@@ -54,13 +54,11 @@ const extension: JupyterFrontEndPlugin<void> = {
 
       gamepads.forEach((gamepadConfig, gamepadIndex) => {
         const full_cmd = command + `:${gamepadIndex}`;
-        const label =gamepadConfig['alias']
+        const label = gamepadConfig['alias'];
         const rcmd = commands.addCommand(full_cmd, {
           label: label,
           caption: `Open ${label} Tab`,
           execute: () => {
-
-
             const widget = new RosGamepadWidget(gamepadIndex);
 
             shell.add(widget, 'main');
@@ -155,13 +153,12 @@ class RosGamepadWidget extends RenderedJSON {
   gamepadState: GamepadState;
 
   constructor(gamepadIndex: number) {
-
     const rendererOptions = {
       mimeType: 'application/json',
       sanitizer: {
-      sanitize: (dirty: string) => {
-      return dirty;
-      }
+        sanitize: (dirty: string) => {
+          return dirty;
+        }
       },
       resolver: null,
       linkHandler: null,
@@ -245,7 +242,11 @@ class RosGamepadWidget extends RenderedJSON {
       this.title.label = 'NO CONTROLLER CONNECTED';
     }
 
-    if (pad && this.gamepadIndex === pad.index && this.gamepadState.name === pad.id) {
+    if (
+      pad &&
+      this.gamepadIndex === pad.index &&
+      this.gamepadState.name === pad.id
+    ) {
       this.gamepadState.set(pad);
 
       const model = new MimeModel();
