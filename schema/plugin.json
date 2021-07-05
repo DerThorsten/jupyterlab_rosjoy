@@ -28,7 +28,8 @@
       "type":"object",
       "properties":{
         "alias" : {"type":"string"}
-      }
+      },
+      "required":["alias"]
     }
   }
 }
