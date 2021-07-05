@@ -13,7 +13,7 @@ import { RenderedJSON } from '@jupyterlab/json-extension';
 
 import { MimeModel } from '@jupyterlab/rendermime';
 
-import iconSvgStr from '../style/icon2.svg';
+import iconSvgStr from '../style/icon.svg';
 
 export const gamepadIcon = new LabIcon({
   name: 'jupyterlab-rosjoy:icon',
@@ -54,10 +54,7 @@ const extension: JupyterFrontEndPlugin<void> = {
 
       gamepads.forEach((gamepadConfig, gamepadIndex) => {
         const full_cmd = command + `:${gamepadIndex}`;
-        const label =
-          'alias' in gamepadConfig
-            ? gamepadConfig['alias']
-            : `Gamepad #${gamepadIndex}`;
+        const label =gamepadConfig['alias']
         const rcmd = commands.addCommand(full_cmd, {
           label: label,
           caption: `Open ${label} Tab`,
