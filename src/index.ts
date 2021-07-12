@@ -214,7 +214,7 @@ class RosGamepadWidget extends RenderedJSON {
     if (pad) {
       console.log('found pad');
       this.gamepadState.setup(pad);
-      this.title.label = this.gamepadState.name;
+      this.title.label = `Gamepad #${this.gamepadIndex} ${this.gamepadState.name}`;
       window.requestAnimationFrame(this.update_loop.bind(this));
     } else {
       window.requestAnimationFrame(this.wait_loop.bind(this));
