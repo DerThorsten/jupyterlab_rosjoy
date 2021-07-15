@@ -52,7 +52,22 @@ const extension: JupyterFrontEndPlugin<void> = {
       }
       registeredCommands = [];
 
-      gamepads.forEach((gamepadConfig, gamepadIndex) => {
+      // check that all indices are unique
+      const indicesSet = new Set<number>();
+      gamepads.forEach(gamepadConfig => {
+        indicesSet.add(gamepadConfig['gamepadIndex']);
+      });
+      if (indicesSet.size < gamepads.length) {
+        console.error(
+          gamepads.length,
+          indicesSet.size,
+          'gamepadIndex must be unique'
+        );
+        throw new Error('gamepadIndex must be unique');
+      }
+
+      gamepads.forEach(gamepadConfig => {
+        const gamepadIndex = gamepadConfig['gamepadIndex'] - 1;
         const full_cmd = command + `:${gamepadIndex}`;
         const label = gamepadConfig['alias'];
         const rcmd = commands.addCommand(full_cmd, {
@@ -113,7 +128,6 @@ class GamepadState {
   setup(pad: Gamepad): void {
     // Set up the main gamepad attributes
     this.name = pad.id;
-    // this.mapping = pad.mapping;
     this.connected = pad.connected;
     this.timestamp = pad.timestamp;
     this.buttons.length = pad.buttons.length;
@@ -136,6 +150,21 @@ class GamepadState {
           console.log(`axes ${ai}`, this.axes[ai]);
         }
       }
+    }
+  }
+
+  asJsonable(): any {
+    if (this.connected) {
+      return {
+        header: {
+          id: this.name,
+          stamp: this.timestamp
+        },
+        axes: this.axes,
+        buttons: this.buttons
+      };
+    } else {
+      return {};
     }
   }
 
@@ -168,7 +197,7 @@ class RosGamepadWidget extends RenderedJSON {
     super(rendererOptions);
     this.addClass('jp-example-view');
     this.id = ID;
-    this.title.label = 'NO CONTROLLER CONNECTED';
+    this.title.label = 'No gamepad connected';
     this.title.icon = gamepadIcon;
     this.title.closable = true;
 
@@ -180,23 +209,12 @@ class RosGamepadWidget extends RenderedJSON {
       const readout = 'This browser does not support gamepads.';
       console.error(readout);
     } else {
-      // Start the wait loop, and listen to updates of the only
-      // user-provided attribute, the gamepad index.
       const readout = 'Connect gamepad and press any button.';
       console.log(readout);
       if (this.gamepadState.connected) {
         this.update_loop();
       } else {
-        const model = new MimeModel();
-        model.setData({
-          data: {
-            'application/json': {
-              gamepad: {}
-            }
-          }
-        });
-
-        this.renderModel(model).then(
+        this.renderModel(this.asJsonMimeNodel()).then(
           (value: any) => {
             this.wait_loop();
           },
@@ -208,8 +226,27 @@ class RosGamepadWidget extends RenderedJSON {
       }
     }
   }
-
+  sendJsonRpc(jsonable: any): void {
+    // @ts-expect-error  this variable is unused intil
+    // we actualy send a message to the ros topic
+    const jsonString = JSON.stringify(jsonable);
+  }
+  asJsonMimeNodel(): MimeModel {
+    return this.asJsonMimeNodelFromJsonable(this.gamepadState.asJsonable());
+  }
+  asJsonMimeNodelFromJsonable(jsonable: any): MimeModel {
+    const model = new MimeModel();
+    model.setData({
+      data: {
+        'application/json': {
+          gamepad: jsonable
+        }
+      }
+    });
+    return model;
+  }
   wait_loop(): void {
+    console.log(this.gamepadIndex, navigator.getGamepads());
     const pad = navigator.getGamepads()[this.gamepadIndex];
     if (pad) {
       console.log('found pad');
@@ -225,21 +262,13 @@ class RosGamepadWidget extends RenderedJSON {
     const pad = navigator.getGamepads()[this.gamepadIndex];
     if (!pad || !pad.connected) {
       this.gamepadState.reset();
-      const model = new MimeModel();
-      model.setData({
-        data: {
-          'application/json': {
-            gamepad: {}
-          }
-        }
-      });
 
-      this.renderModel(model).then((value: any) => {
+      this.renderModel(this.asJsonMimeNodel()).then((value: any) => {
         window.requestAnimationFrame(this.update_loop.bind(this));
       });
 
       window.requestAnimationFrame(this.wait_loop.bind(this));
-      this.title.label = 'NO CONTROLLER CONNECTED';
+      this.title.label = 'No gamepad connected';
     }
 
     if (
@@ -248,27 +277,13 @@ class RosGamepadWidget extends RenderedJSON {
       this.gamepadState.name === pad.id
     ) {
       this.gamepadState.set(pad);
-
-      const model = new MimeModel();
-      model.setData({
-        data: {
-          'application/json': {
-            gamepad: {
-              index: this.gamepadIndex,
-              header: {
-                id: this.gamepadState.name,
-                stamp: this.gamepadState.timestamp
-              },
-              axes: this.gamepadState.axes,
-              buttons: this.gamepadState.buttons
-            }
-          }
+      const jsonable = this.gamepadState.asJsonable();
+      this.sendJsonRpc(jsonable);
+      this.renderModel(this.asJsonMimeNodelFromJsonable(jsonable)).then(
+        (value: any) => {
+          window.requestAnimationFrame(this.update_loop.bind(this));
         }
-      });
-
-      this.renderModel(model).then((value: any) => {
-        window.requestAnimationFrame(this.update_loop.bind(this));
-      });
+      );
     } else {
       this.gamepadState.reset();
     }
